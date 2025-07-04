@@ -24,16 +24,10 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
-
       <AuthProvider>
-        {/* Wrap with Suspense */}
         <Suspense fallback={<LoadingSpinner fullPage />}>
-          <RouterProvider
-            router={router}
-            hydrateFallback={<LoadingSpinner fullPage />}  // <-- Correct prop here
-          />
+          <RouterProvider router={router} />
         </Suspense>
-
         <Toaster position='top-right' reverseOrder={false} />
       </AuthProvider>
     </QueryClientProvider>
