@@ -30,7 +30,7 @@ createRoot(document.getElementById('root')).render(
         <Suspense fallback={<LoadingSpinner fullPage />}>
           <RouterProvider
             router={router}
-            hydrateFallbackElement={<LoadingSpinner fullPage />} // ✅ replace fallbackElement
+            hydrateFallback={<LoadingSpinner fullPage />}  // <-- Correct prop here
           />
         </Suspense>
 
