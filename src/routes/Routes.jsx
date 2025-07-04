@@ -5,7 +5,7 @@ import {
 } from "react-router";
 import { Suspense, lazy } from "react";
 import LoadingSpinner from "../components/Shared/LoadingSpinner";
-import ErrorBoundary from "../components/ErrorBoundary";
+
 import MainLayout from "../layouts/MainLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import PrivateRoute from "./PrivateRoute";
@@ -38,9 +38,9 @@ export const router = createBrowserRouter([
         index: true,
         element: (
           <Suspense fallback={<LoadingSpinner fullPage />}>
-            <ErrorBoundary>
+        
               <Home />
-            </ErrorBoundary>
+      
           </Suspense>
         ),
         loader: async () => {
@@ -54,9 +54,7 @@ export const router = createBrowserRouter([
         path: "plant/:id",
         element: (
           <Suspense fallback={<LoadingSpinner />}>
-            <ErrorBoundary>
-              <PlantDetails />
-            </ErrorBoundary>
+            <PlantDetails />
           </Suspense>
         ),
       },
