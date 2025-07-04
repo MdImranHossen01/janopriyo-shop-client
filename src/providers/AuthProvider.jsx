@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react'
+import { createContext, useEffect, useState } from "react";
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -8,89 +8,69 @@ import {
   signInWithPopup,
   signOut,
   updateProfile,
-} from 'firebase/auth'
-import { app } from '../firebase/firebase.config'
-import axios from 'axios'
+} from "firebase/auth";
+import { app } from "../firebase/firebase.config";
+import axios from "axios";
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const AuthContext = createContext(null)
-const auth = getAuth(app)
-const googleProvider = new GoogleAuthProvider()
+export const AuthContext = createContext(null);
+
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+/* ▸ one axios instance: always sends cookies & same base URL */
+export const axiosSecure = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+});
 
 const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]   = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const createUser = (email, password) => {
-    setLoading(true)
-    return createUserWithEmailAndPassword(auth, email, password)
-  }
+  /* auth helpers ---------------------------------------------------------- */
+  const createUser = (email, password) =>
+    createUserWithEmailAndPassword(auth, email, password);
 
-  const signIn = (email, password) => {
-    setLoading(true)
-    return signInWithEmailAndPassword(auth, email, password)
-  }
+  const signIn  = (email, password) => signInWithEmailAndPassword(auth, email, password);
+  const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+  const logOut  = () => signOut(auth);
+  const updateUserProfile = (name, photo) =>
+    updateProfile(auth.currentUser, { displayName: name, photoURL: photo });
 
-  const signInWithGoogle = () => {
-    setLoading(true)
-    return signInWithPopup(auth, googleProvider)
-  }
-
-  const logOut = async () => {
-    setLoading(true)
-    return signOut(auth)
-  }
-
-  const updateUserProfile = (name, photo) => {
-    return updateProfile(auth.currentUser, {
-      displayName: name,
-      photoURL: photo,
-    })
-  }
-
-  // onAuthStateChange
+  /* observe firebase auth -------------------------------------------------- */
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async currentUser => {
-      console.log('CurrentUser-->', currentUser?.email)
-      if (currentUser?.email) {
-        setUser(currentUser)
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
 
-        // Get JWT token
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/jwt`,
-          {
-            email: currentUser?.email,
-          },
-          { withCredentials: true }
-        )
-      } else {
-        setUser(currentUser)
-        await axios.get(`${import.meta.env.VITE_API_URL}/logout`, {
-          withCredentials: true,
-        })
+      try {
+        if (currentUser?.email) {
+          await axiosSecure.post("/jwt", { email: currentUser.email });
+        } else {
+          await axiosSecure.get("/logout");
+        }
+      } catch (err) {
+        console.error("Auth/JWT sync failed:", err.message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false)
-    })
-    return () => {
-      return unsubscribe()
-    }
-  }, [])
+    });
+
+    return unsubscribe;
+  }, []);
 
   const authInfo = {
     user,
-    setUser,
     loading,
-    setLoading,
     createUser,
     signIn,
     signInWithGoogle,
     logOut,
     updateUserProfile,
-  }
+  };
 
   return (
     <AuthContext.Provider value={authInfo}>{children}</AuthContext.Provider>
-  )
-}
+  );
+};
 
-export default AuthProvider
+export default AuthProvider;
